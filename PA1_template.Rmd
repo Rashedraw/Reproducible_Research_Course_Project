@@ -1,0 +1,153 @@
+**Reproducible Research Project**
+=================================
+
+Question 1: Import, load, read, summarize, and identify header names of the activity data set.
+
+```{r echo = TRUE}
+activity_dataset <- read.csv("C:/Users/rashe/Downloads/repdata_data_activity/activity.csv")
+View(activity_dataset)
+summary(activity_dataset)
+names(activity_dataset)
+```
+
+Question 2: Calculate the total number of steps per day.
+
+```{r echo = TRUE}
+StepsPerDay <- aggregate(steps ~ date, activity_dataset, sum, na.rm = TRUE)
+StepsPerDay
+```
+
+Question 3: Plot a histogram of the total number of steps per day.
+
+```{r echo = TRUE}
+hist(StepsPerDay$steps)
+```
+
+Question 4a: Calculate the mean of total steps per day.
+
+```{r echo = TRUE}
+avg_StepsPerDay <- mean(StepsPerDay$steps)
+avg_StepsPerDay
+```
+
+Question 4b: Calculate the median of total steps per day.
+
+```{r echo = TRUE}
+med_StepsPerDay <- median(StepsPerDay$steps)
+med_StepsPerDay
+```
+
+Question 5a: Create a time series plot of 5 minute intervals and average total steps per day.
+
+```{r echo = TRUE}
+avg_StepsPerInterval <- aggregate(steps ~ interval, activity_dataset, mean, na.rm = TRUE)
+avg_StepsPerInterval
+```
+
+```{r echo = TRUE}
+plot(steps ~ interval, data = avg_StepsPerInterval, type="l")
+```
+
+Question 5b: Calculate interval with maximum number of steps.
+
+```{r echo = TRUE}
+max_StepsPer_Interval <- avg_StepsPerInterval[which.max(avg_StepsPerInterval$steps),]$interval
+max_StepsPer_Interval
+```
+
+Question 6a: Count total number of missing values (N/A).
+
+```{r echo = TRUE}
+missing_count <- sum(is.na(activity_dataset$steps))
+missing_count
+```
+
+Question 6b: Replace missing values (N/A) with average steps per interval.
+
+```{r echo = TRUE}
+Mean_StepsPerInterval <- function(interval){
+    avg_StepsPerInterval[avg_StepsPerInterval$interval==interval,]$steps}
+```
+
+Question 6c: Update data set, histogram, and recalculate mean and median.
+
+```{r echo = TRUE}
+new_estimates <- activity_dataset
+for(i in 1:nrow(new_estimates)){
+    if(is.na(new_estimates[i,]$steps)){
+        new_estimates[i,]$steps <- Mean_StepsPerInterval(new_estimates[i,]$interval)}}
+```
+
+```{r echo = TRUE}
+StepsPerDay <- aggregate(steps ~ date, data = new_estimates, sum)
+hist(StepsPerDay$steps)
+```
+
+Mean after filling missing values.
+
+```{r echo = TRUE}
+mean_new <- aggregate(steps ~ date, new_estimates, mean, na.rm = TRUE)
+mean_new
+```
+
+Median after filling missing values.
+
+```{r echo = TRUE}
+median_new <- aggregate(steps ~ date, new_estimates, median, na.rm = TRUE)
+median_new
+```
+
+Question 7a: Create new factor variable.
+
+```{r echo = TRUE}
+new_estimates$date <- as.Date(strptime(new_estimates$date, format="%Y-%m-%d"))
+new_estimates$day <- weekdays(new_estimates$date)
+for (i in 1:nrow(new_estimates)) {
+    if (new_estimates[i,]$day %in% c("Saturday","Sunday")) {
+        new_estimates[i,]$day<-"weekend"}
+    else{new_estimates[i,]$day<-"weekday"}}
+```
+
+```{r echo = TRUE}
+StepsByDay <- aggregate(new_estimates$steps ~ new_estimates$interval + new_estimates$day, new_estimates, mean)
+StepsByDay
+```
+
+Question 7b: Create time series plot of weekdays versus weekends.
+
+```{r echo = TRUE}
+names(StepsByDay) <- c("interval", "day", "steps")
+library(lattice)
+xyplot(steps ~ interval | day, StepsByDay, type = "l", layout = c(1, 2), 
+    xlab = "Interval", ylab = "Number of steps")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
